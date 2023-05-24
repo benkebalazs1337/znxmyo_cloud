@@ -1,25 +1,29 @@
-module "file" {
-  source = "./modules/files"
-  numberOfFilesToCreate = 3
-  contentOfFile = "data for data_module"
-  nameOfTheFile = "data.txt"
+module "files" {
+  source  = "./modules/files"
+  content = "test"
+ filename = "filename"
 }
 module "read" {
-  source = "./modules/read"
-  suffix = "suffix_given_in_main_module"
+  source        = "./modules/read"
+  read_variable = tostring(module.files.example_output[0])
 }
+locals {
+  answers = file("modules/write/terraform.tfvars")
+}  
 module "write" {
-  source = "./modules/write"
-  answer_1 = var.answer_1
-  answer_2 = var.answer_2
-  answer_3 = var.answer_3
-  answer_4 = var.answer_4
-  answer_5 = var.answer_5
+  source        = "./modules/write"
+  
+  answer_1 = trim(split("=", split("\n", local.answers)[0])[1], "\"\n")
+  answer_2 = trim(split("=", split("\n", local.answers)[1])[1], "\"\n")
+  answer_3 = trim(split("=", split("\n", local.answers)[2])[1], "\"\n")
+  answer_4 = trim(split("=", split("\n", local.answers)[3])[1], "\"\n")
+  answer_5 = trim(split("=", split("\n", local.answers)[4])[1], "\"\n")
 }
-module "data"  {
-  source = "./modules/data"
-  path = module.file.get_file_id
-  depends_on = [ 
-    module.file
-  ]
+module "data" {
+   source = "./modules/data"
+   file_path = module.files.example_output[0]
+   depends_on = [module.files]
 }
+output "file_id" {
+   value = module.data.file_id
+ }
